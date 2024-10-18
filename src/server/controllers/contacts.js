@@ -1,5 +1,5 @@
 import { Contact } from "../../models/index.js";
-import { formatContactsList } from "../utils.js";
+import { formatContactsList } from "../../utils.js";
 
 export async function getContacts(req, res) {
   try {

@@ -1,14 +1,9 @@
-import { Sequelize } from 'sequelize';
-import ContactModel from './contact.js';
-import ContactCategoryModel from './contactCategory.js';
+import { Sequelize } from "sequelize";
+import ContactModel from "./contact.js";
+import ContactCategoryModel from "./contactCategory.js";
+import configs from "../configs/database.js";
 
-const sequelize = new Sequelize({
-    username: 'postgres',
-    password:'123456',
-    database: 'ContactsList',
-    dialect: 'postgres',
-    logging: false,
-});
+const sequelize = new Sequelize(configs[process.env.NODE_ENV || "development"]);
 
 const Contact = ContactModel(sequelize);
 const ContactCategory = ContactCategoryModel(sequelize);
@@ -16,6 +11,6 @@ const ContactCategory = ContactCategoryModel(sequelize);
 Contact.hasOne(ContactCategory);
 ContactCategory.belongsTo(Contact);
 
-export {sequelize};
-export {Contact};
-export {ContactCategory};
+export { sequelize };
+export { Contact };
+export { ContactCategory };

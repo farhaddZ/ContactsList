@@ -1,14 +1,15 @@
 import express from "express";
-import bodyParser from 'body-parser';
+import bodyParser from "body-parser";
 import loggerMiddleware from "./middlewares/logger.js";
 import routes from "./routes/contacts.js";
 import { sequelize } from "../models/index.js";
+import configs from '../configs/server.js'
 
-try{
+try {
   await sequelize.sync({ alter: true });
-  console.log('All models were synchronized successfully.');
-} catch(error) {
-  console.log('Error in syncing models:', error);
+  console.log("All models were synchronized successfully.");
+} catch (error) {
+  console.log("Error in syncing models:", error);
   throw error;
 }
 
@@ -16,10 +17,10 @@ const app = express();
 
 app.disable("etag");
 
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(loggerMiddleware);
-app.use('/contacts', routes);
+app.use("/contacts", routes);
 
-app.listen(3000, () => {
+app.listen(configs.port, () => {
   console.log("hello server is listening to port 3000");
 });
