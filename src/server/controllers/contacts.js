@@ -1,30 +1,42 @@
 import multer from "multer";
 import { Contact } from "../../models/index.js";
 import { formatContactsList } from "../../utils.js";
+import { Sequelize } from "sequelize";
+
+const CONTACTS_LIST_PAGE_SIZE = 20;
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-export async function getContacts(req, res) {
+async function loadContacts(req, res, next) {
+  const { sort, desc, q, page = 1 } = req.query;
+
+  const where = {};
+  const order = [];
+
+  if (q) {
+    where[Sequelize.Op.or] = [
+      { firstName: { [Sequelize.Op.like]: `%${q}%` } },
+      { lastName: { [Sequelize.Op.like]: `%${q}%` } },
+      { mobilePhone: { [Sequelize.Op.like]: `%${q}%` } },
+    ];
+  }
+
+  if (sort) {
+    order.push([sort, desc == "true" ? "DESC" : "ASC"]);
+  }
+  
   try {
-    const contacts = await Contact.findAll();
+    const contacts = await Contact.findAll({
+      where,
+      order,
+      limit: CONTACTS_LIST_PAGE_SIZE,
+      offset: Math.max(0, (page - 1) * CONTACTS_LIST_PAGE_SIZE),
+    });
+    req.locals = {
+      contacts,
+    };
 
-    if (req.query.format) {
-      const responseData = `<pre>${formatContactsList(contacts)}</pre>`;
-
-      res.type("html");
-      res.send(responseData);
-      return;
-    }
-
-    const normalizeContacts = contacts.map(
-      ({ dataValues: { id, profilePicture, ...rest } }) => ({
-        id,
-        profilePicture: profilePicture ? `/images/profile-picture/${id}` : null,
-        ...rest,
-      })
-    );
-
-    res.json(normalizeContacts);
+    next();
   } catch (error) {
     res.status(500).send({
       message: "something went wrong",
@@ -32,6 +44,36 @@ export async function getContacts(req, res) {
     });
   }
 }
+
+function getContactsFormatted(req, res, next) {
+  if (req.query.format !== "true") {
+    return next();
+  }
+
+  const { contacts } = req.locals;
+  const responseData = `<pre>${formatContactsList(contacts)}</pre>`;
+
+  res.type("html");
+  res.send(responseData);
+}
+
+function getContactsJSON(req, res) {
+  const { contacts } = req.locals;
+  const normalizeContacts = contacts.map(
+    ({ dataValues: { id, profilePicture, ...rest } }) => ({
+      id,
+      profilePicture: profilePicture ? `/images/profile-picture/${id}` : null,
+      ...rest,
+    })
+  );
+  res.json(normalizeContacts);
+}
+
+export const getContacts = [
+  loadContacts,
+  getContactsFormatted,
+  getContactsJSON,
+];
 
 export async function getContactProfilePicture(req, res) {
   try {

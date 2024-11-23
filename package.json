@@ -22,6 +22,8 @@
     "sequelize": "^6.37.4"
   },
   "devDependencies": {
-    "dotenv-cli": "^7.4.2"
+    "@faker-js/faker": "^9.1.0",
+    "dotenv-cli": "^7.4.2",
+    "sequelize-cli": "^6.6.2"
   }
 }
